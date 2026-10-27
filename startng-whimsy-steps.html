@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>start.ng · whimsy on one section</title>
+<style>
+  /* =====================================================================
+     PART 1: STAND-IN for the existing section (plain, as it is on start.ng).
+     On the real site you keep your own markup and styles. Ignore this part.
+     ===================================================================== */
+  *{box-sizing:border-box;margin:0}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#f6f5ee;color:#292a23}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:.92em;background:rgba(41,42,35,.08);padding:1px 6px;border-radius:6px}
+  #put-your-game{max-width:1100px;margin:0 auto;padding:72px 24px 90px}
+  #put-your-game h2{font-size:clamp(28px,4vw,40px);letter-spacing:-.02em}
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin-top:40px;list-style:none;padding:0}
+  .step .num{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#d8fd71;border:2px solid #292a23;font-weight:800;margin-bottom:14px}
+  .step h3{font-size:19px;margin-bottom:8px}
+  .step p{line-height:1.45;opacity:.78}
+  .links{display:flex;gap:12px;flex-wrap:wrap;margin-top:40px}
+  .links a{padding:12px 20px;border-radius:999px;border:2px solid #292a23;color:inherit;text-decoration:none;font-weight:700}
+  .links a:first-child{background:#292a23;color:#d8fd71}
+  @media (max-width:860px){.steps{grid-template-columns:1fr;gap:34px}}
+
+  /* =====================================================================
+     PART 2: THE WHIMSY LAYER. This is the only thing added.
+     It adds effects on top of the section and changes no existing styles.
+     ===================================================================== */
+  #put-your-game{position:relative}
+  #put-your-game .step .num{position:relative;z-index:2}
+  #put-your-game .wz-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:1}
+  #put-your-game .wz-track{fill:none;stroke:#292a23;stroke-opacity:.28;stroke-width:3;stroke-linecap:round;stroke-dasharray:1 11}
+  #put-your-game .wz-plane{position:absolute;left:0;top:0;width:30px;height:30px;opacity:0;pointer-events:none;z-index:3;transition:opacity .2s}
+  #put-your-game .wz-plane svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 3px 0 rgba(41,42,35,.22))}
+  #put-your-game .wz-toast{
+    position:absolute;z-index:4;transform:translate(-50%,-100%) scale(.5);opacity:0;pointer-events:none;
+    background:#292a23;color:#d8fd71;font-weight:800;font-size:15px;padding:6px 14px;border-radius:999px;white-space:nowrap;
+    transition:transform .3s cubic-bezier(.3,1.7,.5,1),opacity .2s;
+  }
+  #put-your-game .wz-toast.show{transform:translate(-50%,-100%) scale(1);opacity:1}
+
+  /* steps drop in one after another */
+  #put-your-game.wz-armed:not(.wz-in) .step{opacity:0}
+  #put-your-game.wz-in .step{animation:wz-pop .6s cubic-bezier(.2,1.4,.4,1) backwards;animation-delay:calc(var(--i) * 140ms)}
+  @keyframes wz-pop{from{opacity:0;transform:translateY(22px) rotate(-2deg)}}
+
+  /* hover: the number wiggles and the step leans in */
+  #put-your-game .step{transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+  #put-your-game .step:hover{transform:translateY(-4px) rotate(-.8deg)}
+  #put-your-game .step .num{cursor:pointer;transition:background .2s}
+  #put-your-game .step:hover .num{animation:wz-wig .55s ease-in-out}
+  @keyframes wz-wig{25%{transform:rotate(-14deg) scale(1.12)}60%{transform:rotate(12deg) scale(1.12)}}
+
+  /* the plane "lands" on a number */
+  #put-your-game .num.wz-hit{animation:wz-hit .55s ease-out}
+  @keyframes wz-hit{40%{transform:scale(1.35);box-shadow:0 0 0 8px rgba(216,253,113,.7)}}
+
+  /* ---- the two buttons ---- */
+  #put-your-game .links a{position:relative;display:inline-flex;align-items:center;gap:10px;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+  #put-your-game .links a:is(:hover,:focus-visible){transform:translateY(-3px) rotate(-1.2deg)}
+  #put-your-game .links a:nth-child(2):is(:hover,:focus-visible){transform:translateY(-3px) rotate(1.2deg)}
+  #put-your-game.wz-armed:not(.wz-in) .links a{opacity:0}
+  #put-your-game.wz-in .links a{animation:wz-pop .6s cubic-bezier(.2,1.4,.4,1) backwards;animation-delay:calc(650ms + var(--j,0) * 140ms)}
+  #put-your-game .wz-ico{width:22px;height:22px;flex:none;overflow:visible}
+  #put-your-game .links a:is(:hover,:focus-visible) .wz-ico{animation:wz-hop .5s ease-out}
+  @keyframes wz-hop{40%{transform:translateY(-4px) rotate(-8deg)}}
+
+  /* Read the docs: a little book that flips its page */
+  #put-your-game .wz-flip{transform-box:fill-box;transform-origin:0 50%}
+  #put-your-game .links a:is(:hover,:focus-visible) .wz-flip{animation:wz-flip .9s ease-in-out infinite}
+  @keyframes wz-flip{0%,100%{transform:scaleX(1)}50%{transform:scaleX(-1)}}
+
+  /* Docs for your AI: a little robot whose eyes follow your cursor */
+  #put-your-game .wz-eyes{transition:transform .12s ease-out}
+  #put-your-game .wz-eye{transform-box:fill-box;transform-origin:center;animation:wz-blink 4.2s infinite}
+  @keyframes wz-blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+  #put-your-game .wz-ant{transition:fill .2s}
+  #put-your-game .links a:is(:hover,:focus-visible) .wz-ant{fill:#d8fd71;animation:wz-glow .6s ease-in-out infinite}
+  @keyframes wz-glow{50%{transform:scale(1.5)}}
+  #put-your-game .wz-ant{transform-box:fill-box;transform-origin:center}
+  #put-your-game .wz-beep{
+    position:absolute;left:12px;top:-30px;background:#292a23;color:#d8fd71;font-size:13px;font-weight:800;padding:3px 10px;border-radius:999px;
+    opacity:0;transform:translateY(6px) scale(.6);transform-origin:0 100%;pointer-events:none;white-space:nowrap;
+    transition:opacity .15s,transform .3s cubic-bezier(.3,1.7,.5,1)
+  }
+  #put-your-game .links a:is(:hover,:focus-visible) .wz-beep{opacity:1;transform:none}
+
+  .wz-confetti{position:fixed;width:9px;height:13px;border-radius:3px;pointer-events:none;z-index:99}
+
+  @media (prefers-reduced-motion:reduce){
+    #put-your-game *,#put-your-game *::before{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== PART 1 (existing section, unchanged wording) ===== -->
+<section id="put-your-game">
+  <h2>Got a game? Put it on start.ng</h2>
+  <ol class="steps">
+    <li class="step" style="--i:0"><span class="num" aria-hidden="true">1</span><h3>Build it</h3><p>Any static browser game: HTML, JavaScript, three.js, Phaser. Players bring their start.ng character, scores and friends.</p></li>
+    <li class="step" style="--i:1"><span class="num" aria-hidden="true">2</span><h3>Push it to GitHub</h3><p>A public repo with a ready-to-play <code>index.html</code> at the top or in <code>dist/</code>, plus a <code>cover.png</code> for its card.</p></li>
+    <li class="step" style="--i:2"><span class="num" aria-hidden="true">3</span><h3>Publish it</h3><p>One API call with your repo link, no key needed. Or hand your AI <code>start.ng/docs</code> and let it do the lot.</p></li>
+    <li class="step" style="--i:3"><span class="num" aria-hidden="true">4</span><h3>Approve it once</h3><p>Open the link you get back and it's live at <code>yourgame.start.ng</code>, with its own leaderboard if you want one. After that, every push updates it.</p></li>
+  </ol>
+  <div class="links">
+    <a href="https://start.ng/docs">Read the docs</a>
+    <a href="https://start.ng/docs.md">Docs for your AI (.md)</a>
+  </div>
+</section>
+
+<!-- ===== PART 2: whimsy script. Only these three selectors need to match your markup. ===== -->
+<script>
+(() => {
+  const SECTION = '#put-your-game';   // the section wrapper
+  const STEP    = '.step';            // each of the four steps
+  const BADGE   = '.num';             // the number inside each step
+  const DOCS_BTN = '.links a:nth-child(1)';  // "Read the docs"
+  const AI_BTN   = '.links a:nth-child(2)';  // "Docs for your AI (.md)"
+
+  const sec = document.querySelector(SECTION);
+  if (!sec) return;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const steps = [...sec.querySelectorAll(STEP)];
+  const ns = 'http://www.w3.org/2000/svg';
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('class', 'wz-svg'); svg.setAttribute('aria-hidden', 'true');
+  sec.appendChild(svg);
+
+  const plane = document.createElement('div');
+  plane.className = 'wz-plane'; plane.setAttribute('aria-hidden', 'true');
+  plane.innerHTML = '<svg viewBox="0 0 28 28"><path d="M2 4L26 14L2 24L8 14Z" fill="#fffefa" stroke="#292a23" stroke-width="2.2" stroke-linejoin="round"/><path d="M8 14L26 14" stroke="#292a23" stroke-width="1.6"/></svg>';
+  sec.appendChild(plane);
+
+  const toast = document.createElement('div');
+  toast.className = 'wz-toast'; toast.textContent = "You're live!"; toast.setAttribute('aria-hidden', 'true');
+  sec.appendChild(toast);
+
+  let segs = [], P = [], running = false;
+
+  function points() {
+    const s = sec.getBoundingClientRect();
+    return steps.map(st => {
+      const r = st.querySelector(BADGE).getBoundingClientRect();
+      return { x: r.left - s.left + r.width/2, y: r.top - s.top + r.height/2 };
+    });
+  }
+  function build() {
+    svg.innerHTML = ''; segs = []; P = points();
+    for (let i = 0; i < P.length - 1; i++) {
+      const a = P[i], b = P[i+1], dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+      const k = (i % 2 ? -1 : 1) * Math.min(46, len * .3);
+      const cx = (a.x + b.x)/2 + (-dy/len)*k, cy = (a.y + b.y)/2 + (dx/len)*k;
+      const p = document.createElementNS(ns, 'path');
+      p.setAttribute('d', `M${a.x} ${a.y}Q${cx} ${cy} ${b.x} ${b.y}`);
+      p.setAttribute('class', 'wz-track');
+      svg.appendChild(p); segs.push(p);
+    }
+  }
+
+  function along(path, dur) {
+    return new Promise(res => {
+      const L = path.getTotalLength(), t0 = performance.now();
+      (function f(now) {
+        const t = Math.min(1, (now - t0)/dur), e = t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+        const p = path.getPointAtLength(L*e), q = path.getPointAtLength(Math.min(L, L*e + 1));
+        const ang = Math.atan2(q.y - p.y, q.x - p.x) * 180/Math.PI;
+        plane.style.transform = `translate(${p.x - 15}px,${p.y - 15}px) rotate(${ang}deg)`;
+        if (t < 1) requestAnimationFrame(f); else res();
+      })(t0);
+    });
+  }
+  function bump(i) {
+    const b = steps[i].querySelector(BADGE);
+    b.classList.remove('wz-hit'); void b.offsetWidth; b.classList.add('wz-hit');
+  }
+  function confetti(i) {
+    const r = steps[i].querySelector(BADGE).getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2, cols = ['#d8fd71', '#292a23', '#ffc728', '#fffefa'];
+    for (let n = 0; n < 26; n++) {
+      const c = document.createElement('span');
+      c.className = 'wz-confetti'; c.style.left = cx + 'px'; c.style.top = cy + 'px';
+      c.style.background = cols[n % cols.length]; c.style.border = '1px solid rgba(41,42,35,.35)';
+      document.body.appendChild(c);
+      const a = Math.random()*Math.PI*2, d = 50 + Math.random()*110;
+      c.animate([
+        { transform: 'translate(0,0) rotate(0)', opacity: 1 },
+        { transform: `translate(${Math.cos(a)*d}px,${Math.sin(a)*d + 70}px) rotate(${Math.random()*720}deg)`, opacity: 0 }
+      ], { duration: 800 + Math.random()*500, easing: 'cubic-bezier(.2,.7,.4,1)' }).onfinish = () => c.remove();
+    }
+  }
+  async function celebrate() {
+    const last = steps.length - 1;
+    bump(last);
+    if (reduce) return;
+    confetti(last);
+    toast.style.left = P[last].x + 'px'; toast.style.top = (P[last].y - 34) + 'px';
+    toast.classList.add('show'); await wait(1800); toast.classList.remove('show');
+  }
+  async function fly(from = 0) {
+    if (running || reduce) return;
+    running = true; build();
+    plane.style.transform = `translate(${P[from].x - 15}px,${P[from].y - 15}px)`;
+    plane.style.opacity = 1; bump(from); await wait(250);
+    for (let i = from; i < segs.length; i++) { await along(segs[i], 720); bump(i + 1); }
+    await wait(150); plane.style.opacity = 0;
+    await celebrate(); running = false;
+  }
+
+  /* ---------- the two buttons: icons are added here, your markup stays as it is ---------- */
+  const docsBtn = sec.querySelector(DOCS_BTN), aiBtn = sec.querySelector(AI_BTN);
+  const BOOK = '<svg class="wz-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2.5" fill="currentColor"/>'
+    + '<rect x="3.5" y="5.5" width="8.5" height="13" fill="#fffefa" stroke="#292a23" stroke-width="1.3"/><path d="M5.2 9h5M5.2 12h5M5.2 15h3" stroke="#292a23" stroke-width="1.2" stroke-linecap="round"/>'
+    + '<g class="wz-flip"><rect x="12" y="5.5" width="8.5" height="13" fill="#fffefa" stroke="#292a23" stroke-width="1.3"/><path d="M13.8 9h5M13.8 12h5M13.8 15h3" stroke="#292a23" stroke-width="1.2" stroke-linecap="round"/></g></svg>';
+  const ROBOT = '<svg class="wz-ico wz-robot" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5V5.4" stroke="#292a23" stroke-width="1.6" stroke-linecap="round"/>'
+    + '<circle class="wz-ant" cx="12" cy="2.4" r="1.7" fill="#292a23" stroke="#292a23" stroke-width="1"/>'
+    + '<rect x="2.6" y="9.2" width="2.4" height="5" rx="1.2" fill="#292a23"/><rect x="19" y="9.2" width="2.4" height="5" rx="1.2" fill="#292a23"/>'
+    + '<rect x="4.5" y="5.2" width="15" height="14.5" rx="4.5" fill="#292a23"/>'
+    + '<g class="wz-eyes"><circle class="wz-eye" cx="9.3" cy="11.6" r="2" fill="#d8fd71"/><circle class="wz-eye" cx="14.7" cy="11.6" r="2" fill="#d8fd71"/></g>'
+    + '<path d="M9.5 16.2h5" stroke="#d8fd71" stroke-width="1.4" stroke-linecap="round"/></svg>';
+  if (docsBtn) { docsBtn.insertAdjacentHTML('afterbegin', BOOK); docsBtn.style.setProperty('--j', 0); }
+  if (aiBtn) {
+    aiBtn.insertAdjacentHTML('afterbegin', ROBOT);
+    aiBtn.insertAdjacentHTML('beforeend', '<span class="wz-beep" aria-hidden="true">beep!</span>');
+    aiBtn.style.setProperty('--j', 1);
+    const eyes = aiBtn.querySelector('.wz-eyes'), robot = aiBtn.querySelector('.wz-robot');
+    if (!reduce) {
+      aiBtn.addEventListener('pointermove', e => {
+        const r = robot.getBoundingClientRect(), dx = e.clientX - (r.left + r.width/2), dy = e.clientY - (r.top + r.height/2);
+        const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d/60) * 1.5;
+        eyes.style.transform = `translate(${dx/d*k}px,${dy/d*k}px)`;
+      });
+      aiBtn.addEventListener('pointerleave', () => { eyes.style.transform = ''; });
+    }
+  }
+
+  /* play once when the section scrolls into view; click any number to replay from it */
+  sec.classList.add('wz-armed'); build();
+  new IntersectionObserver((es, io) => {
+    if (!es[0].isIntersecting) return;
+    io.disconnect(); sec.classList.add('wz-in'); setTimeout(() => fly(0), reduce ? 0 : 800);
+  }, { threshold: .35 }).observe(sec);
+
+  steps.forEach((st, i) => st.querySelector(BADGE).addEventListener('click', () => {
+    if (i === steps.length - 1) { build(); bump(i); confetti(i); return; }
+    fly(i);
+  }));
+
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(build, 150); });
+  addEventListener('load', build);
+})();
+</script>
+</body>
+</html>
